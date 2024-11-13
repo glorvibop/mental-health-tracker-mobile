@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:mental_health_tracker/screens/list_moodentry.dart';
+import 'package:mental_health_tracker/screens/login.dart';
 import 'package:mental_health_tracker/widgets/left_drawer.dart';
 import 'package:mental_health_tracker/screens/moodentry_form.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class MyHomePage extends StatelessWidget {
-  final String npm = '2306245573';              // NPM
+  final String npm = '2306245573'; // NPM
   final String name = 'Shaine Glorvina Mathea'; // Nama
-  final String className = 'PBP B';             // Kelas
+  final String className = 'PBP B'; // Kelas
   MyHomePage({super.key});
 
   @override
@@ -24,12 +28,11 @@ class MyHomePage extends StatelessWidget {
         ),
         // Warna latar belakang AppBar diambil dari skema warna tema aplikasi.
         backgroundColor: Theme.of(context).colorScheme.primary,
-        // Mengganti warna icon drawer menjadi putih
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+      // Body halaman dengan padding di sekelilingnya.
       // Masukkan drawer sebagai parameter nilai drawer dari widget Scaffold
       drawer: const LeftDrawer(),
-      // Body halaman dengan padding di sekelilingnya.
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         // Menyusun widget secara vertikal dalam sebuah kolom.
@@ -150,6 +153,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Material(
       // Menentukan warna latar belakang dari tema aplikasi.
       color: Theme.of(context).colorScheme.secondary,
@@ -158,22 +162,51 @@ class ItemCard extends StatelessWidget {
       
       child: InkWell(
         // Aksi ketika kartu ditekan.
-        onTap: () {
+        onTap: () async {
           // Menampilkan pesan SnackBar saat kartu ditekan.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text("Kamu telah menekan tombol ${item.name}!"))
-            );
-        // Navigate ke route yang sesuai (tergantung jenis tombol)
+            ..showSnackBar(SnackBar(
+              content: Text("Kamu telah menekan tombol ${item.name}!")));
+            // Navigate ke route yang sesuai (tergantung jenis tombol)
           if (item.name == "Tambah Mood") {
             Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MoodEntryFormPage(),
-                    ));
+              context,
+              MaterialPageRoute(builder: (context) => const MoodEntryFormPage()),
+            );
+          }
+           else if (item.name == "Lihat Mood") {
+              Navigator.push(context,
+                  MaterialPageRoute(
+                      builder: (context) => const MoodEntryPage()
+                  ),
+              );
+          }
+           else if (item.name == "Logout") {
+              final response = await request.logout(
+                  "http://127.0.0.1:8000/auth/logout/");
+              String message = response["message"];
+              if (context.mounted) {
+                  if (response['status']) {
+                      String uname = response["username"];
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("$message Sampai jumpa, $uname."),
+                      ));
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                      );
+                  } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(message),
+                          ),
+                      );
+                  }
+              }
           }
         },
+
         // Container untuk menyimpan Icon dan Text
         child: Container(
           padding: const EdgeInsets.all(8),
